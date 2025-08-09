@@ -39,42 +39,42 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       CREATE TABLE IF NOT EXISTS users (
-                                                            user_id INTEGER PRIMARY KEY,
-                                                            username TEXT,
-                                                            first_name TEXT,
-                                                            last_name TEXT,
-                                                            is_admin BOOLEAN DEFAULT FALSE,
-                                                            registered_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                       )
-                       ''')
+            CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY,
+                username TEXT,
+                first_name TEXT,
+                last_name TEXT,
+                is_admin BOOLEAN DEFAULT FALSE,
+                registered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
 
         cursor.execute('''
-                       CREATE TABLE IF NOT EXISTS tasks (
-                                                            task_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                            destination TEXT NOT NULL,
-                                                            address TEXT NOT NULL,
-                                                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                                            created_by INTEGER,
-                                                            status TEXT DEFAULT 'pending',
-                                                            accepted_by INTEGER,
-                                                            accepted_at DATETIME,
-                                                            completed_at DATETIME,
-                                                            photo_file_id TEXT,
-                                                            FOREIGN KEY (created_by) REFERENCES users (user_id),
-                           FOREIGN KEY (accepted_by) REFERENCES users (user_id)
-                           )
-                       ''')
+            CREATE TABLE IF NOT EXISTS tasks (
+                task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                destination TEXT NOT NULL,
+                address TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                created_by INTEGER,
+                status TEXT DEFAULT 'pending',
+                accepted_by INTEGER,
+                accepted_at DATETIME,
+                completed_at DATETIME,
+                photo_file_id TEXT,
+                FOREIGN KEY (created_by) REFERENCES users (user_id),
+                FOREIGN KEY (accepted_by) REFERENCES users (user_id)
+            )
+        ''')
 
         cursor.execute('''
-                       CREATE TABLE IF NOT EXISTS work_attendance (
-                                                                      id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                                      user_id INTEGER NOT NULL,
-                                                                      check_in_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                                                                      date DATE DEFAULT (date('now')),
-                           FOREIGN KEY (user_id) REFERENCES users (user_id)
-                           )
-                       ''')
+            CREATE TABLE IF NOT EXISTS work_attendance (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                check_in_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                date DATE DEFAULT (date('now')),
+                FOREIGN KEY (user_id) REFERENCES users (user_id)
+            )
+        ''')
 
         conn.commit()
         conn.close()
@@ -86,8 +86,8 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            INSERT OR REPLACE INTO users 
-            (user_id, username, first_name, last_name, is_admin) 
+            INSERT OR REPLACE INTO users
+            (user_id, username, first_name, last_name, is_admin)
             VALUES (?, ?, ?, ?, ?)
         ''', (ADMIN_ID, "admin", "Администратор", "", True))
 
@@ -105,8 +105,8 @@ class DeliveryBot:
             is_admin = True
 
         cursor.execute('''
-            INSERT OR REPLACE INTO users 
-            (user_id, username, first_name, last_name, is_admin) 
+            INSERT OR REPLACE INTO users
+            (user_id, username, first_name, last_name, is_admin)
             VALUES (?, ?, ?, ?, ?)
         ''', (user_id, username, first_name, last_name, is_admin))
 
@@ -122,10 +122,10 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       SELECT user_id, first_name, username FROM users
-                       WHERE user_id != ? 
+            SELECT user_id, first_name, username FROM users
+            WHERE user_id != ?
             AND (is_admin = FALSE OR is_admin IS NULL)
-                       ''', (ADMIN_ID,))
+        ''', (ADMIN_ID,))
 
         users = cursor.fetchall()
         conn.close()
@@ -146,9 +146,9 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       INSERT INTO tasks (destination, address, created_by)
-                       VALUES (?, ?, ?)
-                       ''', (destination, address, created_by))
+            INSERT INTO tasks (destination, address, created_by)
+            VALUES (?, ?, ?)
+        ''', (destination, address, created_by))
 
         task_id = cursor.lastrowid
         conn.commit()
@@ -162,10 +162,10 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       UPDATE tasks
-                       SET status = 'accepted', accepted_by = ?, accepted_at = CURRENT_TIMESTAMP
-                       WHERE task_id = ? AND status = 'pending'
-                       ''', (user_id, task_id))
+            UPDATE tasks
+            SET status = 'accepted', accepted_by = ?, accepted_at = CURRENT_TIMESTAMP
+            WHERE task_id = ? AND status = 'pending'
+        ''', (user_id, task_id))
 
         success = cursor.rowcount > 0
         conn.commit()
@@ -181,10 +181,10 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       UPDATE tasks
-                       SET status = 'completed', completed_at = CURRENT_TIMESTAMP, photo_file_id = ?
-                       WHERE task_id = ? AND status = 'accepted'
-                       ''', (photo_file_id, task_id))
+            UPDATE tasks
+            SET status = 'completed', completed_at = CURRENT_TIMESTAMP, photo_file_id = ?
+            WHERE task_id = ? AND status = 'accepted'
+        ''', (photo_file_id, task_id))
 
         success = cursor.rowcount > 0
         conn.commit()
@@ -200,25 +200,67 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       SELECT destination, address, accepted_by, status
-                       FROM tasks WHERE task_id = ?
-                       ''', (task_id,))
+            SELECT destination, address, accepted_by, status
+            FROM tasks WHERE task_id = ?
+        ''', (task_id,))
 
         result = cursor.fetchone()
         conn.close()
 
         return result
 
+    def get_stats(self):
+        """Получение статистики"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        stats = {}
+
+        try:
+            # Общее количество заданий
+            cursor.execute('SELECT COUNT(*) FROM tasks')
+            stats['total_tasks'] = cursor.fetchone()[0]
+
+            # Количество заданий по статусам
+            cursor.execute('SELECT status, COUNT(*) FROM tasks GROUP BY status')
+            status_counts = cursor.fetchall()
+            for status, count in status_counts:
+                stats[f'{status}_tasks'] = count
+
+            # Количество пользователей (только сотрудники)
+            cursor.execute('SELECT COUNT(*) FROM users WHERE is_admin = FALSE AND user_id != ?', (ADMIN_ID,))
+            stats['total_users'] = cursor.fetchone()[0]
+
+            # Сегодняшняя посещаемость
+            cursor.execute('SELECT COUNT(*) FROM work_attendance WHERE date = date("now")')
+            stats['today_attendance'] = cursor.fetchone()[0]
+
+        except Exception as e:
+            logger.error(f"Ошибка в get_stats: {e}")
+            # Возвращаем значения по умолчанию
+            stats = {
+                'total_tasks': 0,
+                'pending_tasks': 0,
+                'accepted_tasks': 0,
+                'completed_tasks': 0,
+                'total_users': 0,
+                'today_attendance': 0
+            }
+        finally:
+            conn.close()
+
+        return stats
+
     def get_user_active_task(self, user_id):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
         cursor.execute('''
-                       SELECT task_id, destination, address
-                       FROM tasks
-                       WHERE accepted_by = ? AND status = 'accepted'
-                       ORDER BY accepted_at DESC LIMIT 1
-                       ''', (user_id,))
+            SELECT task_id, destination, address
+            FROM tasks
+            WHERE accepted_by = ? AND status = 'accepted'
+            ORDER BY accepted_at DESC LIMIT 1
+        ''', (user_id,))
 
         result = cursor.fetchone()
         conn.close()
@@ -230,9 +272,9 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       SELECT username, first_name, last_name
-                       FROM users WHERE user_id = ?
-                       ''', (user_id,))
+            SELECT username, first_name, last_name
+            FROM users WHERE user_id = ?
+        ''', (user_id,))
 
         result = cursor.fetchone()
         conn.close()
@@ -244,18 +286,18 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       SELECT id FROM work_attendance
-                       WHERE user_id = ? AND date = date('now')
-                       ''', (user_id,))
+            SELECT id FROM work_attendance
+            WHERE user_id = ? AND date = date('now')
+        ''', (user_id,))
 
         if cursor.fetchone():
             conn.close()
             return False
 
         cursor.execute('''
-                       INSERT INTO work_attendance (user_id)
-                       VALUES (?)
-                       ''', (user_id,))
+            INSERT INTO work_attendance (user_id)
+            VALUES (?)
+        ''', (user_id,))
 
         conn.commit()
         conn.close()
@@ -268,12 +310,12 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       SELECT u.first_name, u.last_name, u.username, w.check_in_time
-                       FROM work_attendance w
-                                JOIN users u ON w.user_id = u.user_id
-                       WHERE w.date = date('now')
-                       ORDER BY w.check_in_time
-                       ''')
+            SELECT u.first_name, u.last_name, u.username, w.check_in_time
+            FROM work_attendance w
+            JOIN users u ON w.user_id = u.user_id
+            WHERE w.date = date('now')
+            ORDER BY w.check_in_time
+        ''')
 
         result = cursor.fetchall()
         conn.close()
@@ -285,9 +327,9 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       SELECT id FROM work_attendance
-                       WHERE user_id = ? AND date = date('now')
-                       ''', (user_id,))
+            SELECT id FROM work_attendance
+            WHERE user_id = ? AND date = date('now')
+        ''', (user_id,))
 
         result = cursor.fetchone() is not None
         conn.close()
@@ -300,19 +342,19 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       CREATE TABLE IF NOT EXISTS task_messages (
-                                                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                                    task_id INTEGER NOT NULL,
-                                                                    user_id INTEGER NOT NULL,
-                                                                    message_id INTEGER NOT NULL,
-                                                                    FOREIGN KEY (task_id) REFERENCES tasks (task_id)
-                           )
-                       ''')
+            CREATE TABLE IF NOT EXISTS task_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                message_id INTEGER NOT NULL,
+                FOREIGN KEY (task_id) REFERENCES tasks (task_id)
+            )
+        ''')
 
         cursor.execute('''
-                       SELECT user_id, message_id FROM task_messages
-                       WHERE task_id = ?
-                       ''', (task_id,))
+            SELECT user_id, message_id FROM task_messages
+            WHERE task_id = ?
+        ''', (task_id,))
 
         result = cursor.fetchall()
         conn.commit()
@@ -326,9 +368,9 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       INSERT INTO task_messages (task_id, user_id, message_id)
-                       VALUES (?, ?, ?)
-                       ''', (task_id, user_id, message_id))
+            INSERT INTO task_messages (task_id, user_id, message_id)
+            VALUES (?, ?, ?)
+        ''', (task_id, user_id, message_id))
 
         conn.commit()
         conn.close()
@@ -359,6 +401,32 @@ class DeliveryBot:
 
         cursor.execute('SELECT COUNT(*) FROM users WHERE is_admin = FALSE')
         stats['total_users'] = cursor.fetchone()[0]
+
+        conn.close()
+    def get_stats(self):
+        """Получение статистики"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        stats = {}
+
+        # Общее количество заданий
+        cursor.execute('SELECT COUNT(*) FROM tasks')
+        stats['total_tasks'] = cursor.fetchone()[0]
+
+        # Количество заданий по статусам
+        cursor.execute('SELECT status, COUNT(*) FROM tasks GROUP BY status')
+        status_counts = cursor.fetchall()
+        for status, count in status_counts:
+            stats[f'{status}_tasks'] = count
+
+        # Количество пользователей (только сотрудники)
+        cursor.execute('SELECT COUNT(*) FROM users WHERE is_admin = FALSE AND user_id != ?', (ADMIN_ID,))
+        stats['total_users'] = cursor.fetchone()[0]
+
+        # Сегодняшняя посещаемость
+        cursor.execute('SELECT COUNT(*) FROM work_attendance WHERE date = date("now")')
+        stats['today_attendance'] = cursor.fetchone()[0]
 
         conn.close()
         return stats
@@ -670,24 +738,72 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == "stats":
         if bot_instance.is_admin(user_id):
-            stats = bot_instance.get_stats()
+            try:
+                # Проверяем, есть ли метод get_stats
+                if hasattr(bot_instance, 'get_stats'):
+                    stats = bot_instance.get_stats()
+                else:
+                    # Запасной вариант - получаем статистику напрямую
+                    stats = {}
+                    conn = sqlite3.connect(bot_instance.db_path)
+                    cursor = conn.cursor()
 
-            total_users = stats.get('total_users', 0)
-            total_tasks = stats.get('total_tasks', 0)
-            pending_tasks = stats.get('pending_tasks', 0)
-            accepted_tasks = stats.get('accepted_tasks', 0)
-            completed_tasks = stats.get('completed_tasks', 0)
+                    cursor.execute('SELECT COUNT(*) FROM tasks')
+                    stats['total_tasks'] = cursor.fetchone()[0]
 
-            stats_text = f"📊 Статистика бота:\n\n👥 Сотрудников: {total_users}\n📋 Всего заданий: {total_tasks}\n⏳ Ожидающих: {pending_tasks}\n🔄 В работе: {accepted_tasks}\n✅ Завершенных: {completed_tasks}"
+                    cursor.execute('SELECT status, COUNT(*) FROM tasks GROUP BY status')
+                    status_counts = cursor.fetchall()
+                    for status, count in status_counts:
+                        stats[f'{status}_tasks'] = count
 
-            keyboard = [
-                [InlineKeyboardButton("📋 Создать задание", callback_data="create_task")],
-                [InlineKeyboardButton("🔄 Обновить", callback_data="stats")],
-                [InlineKeyboardButton("🔙 Назад", callback_data="back_to_menu")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
+                    cursor.execute('SELECT COUNT(*) FROM users WHERE is_admin = FALSE')
+                    stats['total_users'] = cursor.fetchone()[0]
 
-            await query.edit_message_text(stats_text, reply_markup=reply_markup)
+                    cursor.execute('SELECT COUNT(*) FROM work_attendance WHERE date = date("now")')
+                    stats['today_attendance'] = cursor.fetchone()[0]
+
+                    conn.close()
+
+                total_users = stats.get('total_users', 0)
+                total_tasks = stats.get('total_tasks', 0)
+                pending_tasks = stats.get('pending_tasks', 0)
+                accepted_tasks = stats.get('accepted_tasks', 0)
+                completed_tasks = stats.get('completed_tasks', 0)
+                today_attendance = stats.get('today_attendance', 0)
+
+                stats_text = (
+                    "📊 Статистика бота:\n\n"
+                    f"👥 Сотрудников: {total_users}\n"
+                    f"🏢 Сегодня на работе: {today_attendance}\n\n"
+                    f"📋 Всего заданий: {total_tasks}\n"
+                    f"⏳ Ожидающих: {pending_tasks}\n"
+                    f"🔄 В работе: {accepted_tasks}\n"
+                    f"✅ Завершенных: {completed_tasks}"
+                )
+
+                keyboard = [
+                    [InlineKeyboardButton("📋 Создать задание", callback_data="create_task")],
+                    [InlineKeyboardButton("🔄 Обновить", callback_data="stats")],
+                    [InlineKeyboardButton("🔙 Назад", callback_data="back_to_menu")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                await query.edit_message_text(stats_text, reply_markup=reply_markup)
+
+            except Exception as e:
+                logger.error(f"Ошибка получения статистики: {e}")
+                error_text = (
+                    "❌ Ошибка при получении статистики.\n\n"
+                    "Возможные причины:\n"
+                    "• База данных не инициализирована\n"
+                    "• Проблемы с подключением\n\n"
+                    "Попробуйте перезапустить бота."
+                )
+
+                keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="back_to_menu")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+
+                await query.edit_message_text(error_text, reply_markup=reply_markup)
         else:
             await query.edit_message_text("❌ У вас нет прав администратора!")
 
