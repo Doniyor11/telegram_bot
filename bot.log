@@ -2583,3 +2583,106 @@
 2025-08-09 20:57:19,746 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
 2025-08-09 20:57:29,843 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
 2025-08-09 20:57:39,941 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:57:50,038 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:58:00,135 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:58:10,233 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:58:20,331 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:58:30,428 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:58:40,525 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:58:50,623 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:59:00,720 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:59:10,818 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:59:20,917 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:59:31,015 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:59:41,112 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 20:59:51,211 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:00:01,309 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:00:11,410 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:00:21,507 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:00:31,605 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:00:41,718 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:00:51,816 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:01,923 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:12,109 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:16,240 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:16,610 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:01:16,612 - __main__ - ERROR - Exception while handling an update: no such table: work_attendance
+2025-08-09 21:01:19,848 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:19,849 - __main__ - INFO - Администратор 633078634 подключился
+2025-08-09 21:01:20,041 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/sendMessage "HTTP/1.1 200 OK"
+2025-08-09 21:01:21,784 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:21,939 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:01:21,940 - __main__ - ERROR - Exception while handling an update: no such table: work_attendance
+2025-08-09 21:01:26,089 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:26,197 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:01:26,198 - __main__ - ERROR - Exception while handling an update: no such table: work_attendance
+2025-08-09 21:01:29,044 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:29,162 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:01:29,163 - __main__ - ERROR - Exception while handling an update: no such table: work_attendance
+2025-08-09 21:01:30,756 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:30,859 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:01:30,859 - __main__ - ERROR - Exception while handling an update: 'DeliveryBot' object has no attribute 'get_stats'
+2025-08-09 21:01:32,456 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:32,676 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:01:32,883 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/editMessageText "HTTP/1.1 200 OK"
+2025-08-09 21:01:36,933 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:37,055 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/sendMessage "HTTP/1.1 200 OK"
+2025-08-09 21:01:39,583 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:39,585 - __main__ - ERROR - Exception while handling an update: no such table: tasks
+2025-08-09 21:01:49,684 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:01:59,781 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:07,631 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:07,631 - __main__ - INFO - Администратор 633078634 подключился
+2025-08-09 21:02:07,952 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/sendMessage "HTTP/1.1 200 OK"
+2025-08-09 21:02:09,187 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:09,375 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:02:09,574 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/editMessageText "HTTP/1.1 200 OK"
+2025-08-09 21:02:11,803 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:11,804 - __main__ - ERROR - Exception while handling an update: no such table: tasks
+2025-08-09 21:02:16,277 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:16,280 - __main__ - ERROR - Exception while handling an update: no such table: tasks
+2025-08-09 21:02:20,806 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:20,807 - __main__ - ERROR - Exception while handling an update: no such table: users
+2025-08-09 21:02:30,066 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:30,067 - __main__ - INFO - Администратор 633078634 подключился
+2025-08-09 21:02:30,414 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/sendMessage "HTTP/1.1 200 OK"
+2025-08-09 21:02:31,379 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:31,492 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:02:31,619 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/editMessageText "HTTP/1.1 200 OK"
+2025-08-09 21:02:34,077 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:34,079 - __main__ - ERROR - Exception while handling an update: no such table: tasks
+2025-08-09 21:02:37,428 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:37,429 - __main__ - ERROR - Exception while handling an update: no such table: tasks
+2025-08-09 21:02:46,005 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:46,308 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:02:46,422 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/editMessageText "HTTP/1.1 200 OK"
+2025-08-09 21:02:47,672 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:02:47,841 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/answerCallbackQuery "HTTP/1.1 200 OK"
+2025-08-09 21:02:48,013 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/editMessageText "HTTP/1.1 200 OK"
+2025-08-09 21:02:57,780 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-09 21:03:07,878 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-14 14:04:23,049 - __main__ - INFO - Статус администратора обновлен для ID: 633078634
+2025-08-14 14:04:23,049 - __main__ - INFO - База данных инициализирована
+2025-08-14 14:04:23,049 - __main__ - INFO - 🚀 Запуск бота...
+2025-08-14 14:04:26,051 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-08-14 14:04:26,051 - __main__ - INFO - ✅ Планировщик задач настроен
+2025-08-14 14:04:26,052 - __main__ - INFO - ✅ Бот запущен и работает!
+2025-08-14 14:08:08,396 - __main__ - INFO - Статус администратора обновлен для ID: 1995964543
+2025-08-14 14:08:08,397 - __main__ - INFO - База данных инициализирована
+2025-08-14 14:08:08,397 - __main__ - INFO - 🚀 Запуск бота...
+2025-08-14 14:08:09,170 - __main__ - WARNING - ⚠️ Ошибка настройки планировщика: 'NoneType' object has no attribute 'run_daily'
+2025-08-14 14:08:09,171 - __main__ - INFO - Бот будет работать без автоматических напоминаний
+2025-08-14 14:08:09,172 - __main__ - INFO - ✅ Бот запущен и работает!
+2025-08-14 14:08:09,571 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getMe "HTTP/1.1 200 OK"
+2025-08-14 14:08:09,669 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/deleteWebhook "HTTP/1.1 200 OK"
+2025-08-14 14:08:09,671 - telegram.ext.Application - INFO - Application started
+2025-08-14 14:08:09,977 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/getUpdates "HTTP/1.1 200 OK"
+2025-08-14 14:08:10,089 - __main__ - INFO - Пользователь 1165496684 добавлен в базу
+2025-08-14 14:08:10,090 - __main__ - INFO - Сотрудник 1165496684 зарегистрирован
+2025-08-14 14:08:10,221 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/sendMessage "HTTP/1.1 200 OK"
+2025-08-14 14:08:10,222 - __main__ - INFO - Администратор 1995964543 подключился
+2025-08-14 14:08:10,350 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/sendMessage "HTTP/1.1 200 OK"
+2025-08-14 14:08:10,446 - __main__ - INFO - Пользователь 633078634 добавлен в базу
+2025-08-14 14:08:10,447 - __main__ - INFO - Сотрудник 633078634 зарегистрирован
+2025-08-14 14:08:10,617 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY/sendMessage "HTTP/1.1 200 OK"
+2025-08-14 14:08:13,973 - __main__ - INFO - 🛑 Бот остановлен пользователем
