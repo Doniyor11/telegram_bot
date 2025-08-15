@@ -13,7 +13,23 @@ import pytz
 
 # Настройки бота
 BOT_TOKEN = "8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY"
-ADMIN_ID = 8399139095
+ADMIN_ID = 633078634
+
+# Часовой пояс Ташкента
+TASHKENT_TZ = pytz.timezone('Asia/Tashkent')
+
+def get_tashkent_time():
+    """Получить текущее время в Ташкенте"""
+    return datetime.now(TASHKENT_TZ)
+
+def format_tashkent_time(dt=None):
+    """Форматировать время в формате для Ташкента"""
+    if dt is None:
+        dt = get_tashkent_time()
+    elif dt.tzinfo is None:
+        # Если время без часового пояса, считаем что это UTC и конвертируем
+        dt = pytz.UTC.localize(dt).astimezone(TASHKENT_TZ)
+    return dt.strftime('%d.%m.%Y %H:%M')
 
 # Логирование
 logging.basicConfig(
@@ -39,42 +55,42 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                user_id INTEGER PRIMARY KEY,
-                username TEXT,
-                first_name TEXT,
-                last_name TEXT,
-                is_admin BOOLEAN DEFAULT FALSE,
-                registered_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
+                       CREATE TABLE IF NOT EXISTS users (
+                                                            user_id INTEGER PRIMARY KEY,
+                                                            username TEXT,
+                                                            first_name TEXT,
+                                                            last_name TEXT,
+                                                            is_admin BOOLEAN DEFAULT FALSE,
+                                                            registered_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                       )
+                       ''')
 
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS tasks (
-                task_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                destination TEXT NOT NULL,
-                address TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                created_by INTEGER,
-                status TEXT DEFAULT 'pending',
-                accepted_by INTEGER,
-                accepted_at DATETIME,
-                completed_at DATETIME,
-                photo_file_id TEXT,
-                FOREIGN KEY (created_by) REFERENCES users (user_id),
-                FOREIGN KEY (accepted_by) REFERENCES users (user_id)
-            )
-        ''')
+                       CREATE TABLE IF NOT EXISTS tasks (
+                                                            task_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                            destination TEXT NOT NULL,
+                                                            address TEXT NOT NULL,
+                                                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                                            created_by INTEGER,
+                                                            status TEXT DEFAULT 'pending',
+                                                            accepted_by INTEGER,
+                                                            accepted_at DATETIME,
+                                                            completed_at DATETIME,
+                                                            photo_file_id TEXT,
+                                                            FOREIGN KEY (created_by) REFERENCES users (user_id),
+                           FOREIGN KEY (accepted_by) REFERENCES users (user_id)
+                           )
+                       ''')
 
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS work_attendance (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                check_in_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-                date DATE DEFAULT (date('now')),
-                FOREIGN KEY (user_id) REFERENCES users (user_id)
-            )
-        ''')
+                       CREATE TABLE IF NOT EXISTS work_attendance (
+                                                                      id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                                      user_id INTEGER NOT NULL,
+                                                                      check_in_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                                                      date DATE DEFAULT (date('now')),
+                           FOREIGN KEY (user_id) REFERENCES users (user_id)
+                           )
+                       ''')
 
         conn.commit()
         conn.close()
@@ -86,8 +102,8 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            INSERT OR REPLACE INTO users
-            (user_id, username, first_name, last_name, is_admin)
+            INSERT OR REPLACE INTO users 
+            (user_id, username, first_name, last_name, is_admin) 
             VALUES (?, ?, ?, ?, ?)
         ''', (ADMIN_ID, "admin", "Администратор", "", True))
 
@@ -105,8 +121,8 @@ class DeliveryBot:
             is_admin = True
 
         cursor.execute('''
-            INSERT OR REPLACE INTO users
-            (user_id, username, first_name, last_name, is_admin)
+            INSERT OR REPLACE INTO users 
+            (user_id, username, first_name, last_name, is_admin) 
             VALUES (?, ?, ?, ?, ?)
         ''', (user_id, username, first_name, last_name, is_admin))
 
@@ -122,10 +138,10 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT user_id, first_name, username FROM users
-            WHERE user_id != ?
+                       SELECT user_id, first_name, username FROM users
+                       WHERE user_id != ? 
             AND (is_admin = FALSE OR is_admin IS NULL)
-        ''', (ADMIN_ID,))
+                       ''', (ADMIN_ID,))
 
         users = cursor.fetchall()
         conn.close()
@@ -146,9 +162,9 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            INSERT INTO tasks (destination, address, created_by)
-            VALUES (?, ?, ?)
-        ''', (destination, address, created_by))
+                       INSERT INTO tasks (destination, address, created_by)
+                       VALUES (?, ?, ?)
+                       ''', (destination, address, created_by))
 
         task_id = cursor.lastrowid
         conn.commit()
@@ -162,10 +178,10 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            UPDATE tasks
-            SET status = 'accepted', accepted_by = ?, accepted_at = CURRENT_TIMESTAMP
-            WHERE task_id = ? AND status = 'pending'
-        ''', (user_id, task_id))
+                       UPDATE tasks
+                       SET status = 'accepted', accepted_by = ?, accepted_at = CURRENT_TIMESTAMP
+                       WHERE task_id = ? AND status = 'pending'
+                       ''', (user_id, task_id))
 
         success = cursor.rowcount > 0
         conn.commit()
@@ -181,10 +197,10 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            UPDATE tasks
-            SET status = 'completed', completed_at = CURRENT_TIMESTAMP, photo_file_id = ?
-            WHERE task_id = ? AND status = 'accepted'
-        ''', (photo_file_id, task_id))
+                       UPDATE tasks
+                       SET status = 'completed', completed_at = CURRENT_TIMESTAMP, photo_file_id = ?
+                       WHERE task_id = ? AND status = 'accepted'
+                       ''', (photo_file_id, task_id))
 
         success = cursor.rowcount > 0
         conn.commit()
@@ -200,9 +216,9 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT destination, address, accepted_by, status
-            FROM tasks WHERE task_id = ?
-        ''', (task_id,))
+                       SELECT destination, address, accepted_by, status
+                       FROM tasks WHERE task_id = ?
+                       ''', (task_id,))
 
         result = cursor.fetchone()
         conn.close()
@@ -256,11 +272,11 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT task_id, destination, address
-            FROM tasks
-            WHERE accepted_by = ? AND status = 'accepted'
-            ORDER BY accepted_at DESC LIMIT 1
-        ''', (user_id,))
+                       SELECT task_id, destination, address
+                       FROM tasks
+                       WHERE accepted_by = ? AND status = 'accepted'
+                       ORDER BY accepted_at DESC LIMIT 1
+                       ''', (user_id,))
 
         result = cursor.fetchone()
         conn.close()
@@ -272,9 +288,9 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT username, first_name, last_name
-            FROM users WHERE user_id = ?
-        ''', (user_id,))
+                       SELECT username, first_name, last_name
+                       FROM users WHERE user_id = ?
+                       ''', (user_id,))
 
         result = cursor.fetchone()
         conn.close()
@@ -286,18 +302,18 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT id FROM work_attendance
-            WHERE user_id = ? AND date = date('now')
-        ''', (user_id,))
+                       SELECT id FROM work_attendance
+                       WHERE user_id = ? AND date = date('now')
+                       ''', (user_id,))
 
         if cursor.fetchone():
             conn.close()
             return False
 
         cursor.execute('''
-            INSERT INTO work_attendance (user_id)
-            VALUES (?)
-        ''', (user_id,))
+                       INSERT INTO work_attendance (user_id)
+                       VALUES (?)
+                       ''', (user_id,))
 
         conn.commit()
         conn.close()
@@ -310,12 +326,12 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT u.first_name, u.last_name, u.username, w.check_in_time
-            FROM work_attendance w
-            JOIN users u ON w.user_id = u.user_id
-            WHERE w.date = date('now')
-            ORDER BY w.check_in_time
-        ''')
+                       SELECT u.first_name, u.last_name, u.username, w.check_in_time
+                       FROM work_attendance w
+                                JOIN users u ON w.user_id = u.user_id
+                       WHERE w.date = date('now')
+                       ORDER BY w.check_in_time
+                       ''')
 
         result = cursor.fetchall()
         conn.close()
@@ -327,9 +343,9 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT id FROM work_attendance
-            WHERE user_id = ? AND date = date('now')
-        ''', (user_id,))
+                       SELECT id FROM work_attendance
+                       WHERE user_id = ? AND date = date('now')
+                       ''', (user_id,))
 
         result = cursor.fetchone() is not None
         conn.close()
@@ -342,19 +358,19 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS task_messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                task_id INTEGER NOT NULL,
-                user_id INTEGER NOT NULL,
-                message_id INTEGER NOT NULL,
-                FOREIGN KEY (task_id) REFERENCES tasks (task_id)
-            )
-        ''')
+                       CREATE TABLE IF NOT EXISTS task_messages (
+                                                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                                    task_id INTEGER NOT NULL,
+                                                                    user_id INTEGER NOT NULL,
+                                                                    message_id INTEGER NOT NULL,
+                                                                    FOREIGN KEY (task_id) REFERENCES tasks (task_id)
+                           )
+                       ''')
 
         cursor.execute('''
-            SELECT user_id, message_id FROM task_messages
-            WHERE task_id = ?
-        ''', (task_id,))
+                       SELECT user_id, message_id FROM task_messages
+                       WHERE task_id = ?
+                       ''', (task_id,))
 
         result = cursor.fetchall()
         conn.commit()
@@ -368,9 +384,9 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-            INSERT INTO task_messages (task_id, user_id, message_id)
-            VALUES (?, ?, ?)
-        ''', (task_id, user_id, message_id))
+                       INSERT INTO task_messages (task_id, user_id, message_id)
+                       VALUES (?, ?, ?)
+                       ''', (task_id, user_id, message_id))
 
         conn.commit()
         conn.close()
@@ -563,7 +579,7 @@ async def check_in_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🏢 Сотрудник вышел на работу!\n\n"
             f"👤 Сотрудник: {full_name}\n"
             f"📱 Username: @{username}\n"
-            f"🕐 Время: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+            f"🕐 Время: {format_tashkent_time()}"
         )
 
         try:
@@ -581,7 +597,7 @@ async def check_in_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.callback_query.edit_message_text(
             f"✅ Вы отметились на работе!\n"
-            f"🕐 Время: {datetime.now().strftime('%H:%M')}\n\n"
+            f"🕐 Время: {get_tashkent_time().strftime('%H:%M')}\n\n"
             f"Администратор уведомлен.",
             reply_markup=reply_markup
         )
@@ -605,11 +621,23 @@ async def attendance_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         for first_name, last_name, username, check_in_time in attendance:
             full_name = f"{first_name} {last_name}".strip()
             username_text = f"@{username}" if username else "Не указан"
-            time_obj = datetime.fromisoformat(check_in_time).strftime('%H:%M')
+
+            # Конвертируем время из базы в ташкентское время
+            try:
+                if check_in_time:
+                    dt = datetime.fromisoformat(check_in_time)
+                    if dt.tzinfo is None:
+                        dt = pytz.UTC.localize(dt)
+                    tashkent_time = dt.astimezone(TASHKENT_TZ)
+                    time_str = tashkent_time.strftime('%H:%M')
+                else:
+                    time_str = "Неизвестно"
+            except:
+                time_str = "Ошибка"
 
             attendance_text += f"👤 {full_name}\n"
             attendance_text += f"📱 {username_text}\n"
-            attendance_text += f"🕐 {time_obj}\n\n"
+            attendance_text += f"🕐 {time_str}\n\n"
     else:
         attendance_text = "❌ Сегодня никто еще не отмечался на работе."
 
@@ -844,7 +872,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"✅ Задание #{task_id} принято!\n\n"
                 f"👤 Сотрудник: {full_name}\n"
                 f"📱 Username: @{username}\n"
-                f"🕐 Время: {datetime.now().strftime('%d.%m.%Y %H:%M')}"
+                f"🕐 Время: {format_tashkent_time()}"
             )
 
             try:
@@ -928,7 +956,7 @@ async def get_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"📦 Новое задание #{task_id}\n\n"
         f"📍 Пункт назначения: {destination}\n"
         f"🏠 Адрес: {address}\n"
-        f"🕐 Время создания: {datetime.now().strftime('%d.%m.%Y %H:%M')}\n\n"
+        f"🕐 Время создания: {format_tashkent_time()}\n\n"
         f"Нажмите 'Принимаю', чтобы взять задание:"
     )
 
@@ -1002,7 +1030,7 @@ async def receive_photo_report(update: Update, context: ContextTypes.DEFAULT_TYP
                     f"📱 Username: @{username}\n"
                     f"📍 Пункт назначения: {destination}\n"
                     f"🏠 Адрес: {address}\n"
-                    f"🕐 Время завершения: {datetime.now().strftime('%d.%m.%Y %H:%M')}\n\n"
+                    f"🕐 Время завершения: {format_tashkent_time()}\n\n"
                     f"📸 Фото-отчет:"
                 )
 
@@ -1062,7 +1090,7 @@ def main():
     job_queue = application.job_queue
 
     try:
-        timezone = pytz.timezone('Asia/Tashkent')
+        timezone = TASHKENT_TZ
         reminder_time = time(hour=7, minute=0)
 
         job_queue.run_daily(
@@ -1070,7 +1098,7 @@ def main():
             time=reminder_time,
             name="daily_work_reminder"
         )
-        logger.info("✅ Планировщик задач настроен")
+        logger.info("✅ Планировщик задач настроен для Ташкента (UTC+5)")
     except Exception as e:
         logger.warning(f"⚠️ Ошибка настройки планировщика: {e}")
         logger.info("Бот будет работать без автоматических напоминаний")
@@ -1105,20 +1133,37 @@ def main():
 
     application.add_error_handler(error_handler)
 
-    logger.info("✅ Бот запущен и работает!")
-    print("🤖 Телеграм бот запущен!")
-    print(f"👤 Администратор: {ADMIN_ID}")
-    print("📋 Бот готов принимать команды...")
-    print("⏰ Напоминания в 7:00 (если доступен планировщик)")
-
     try:
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
+        logger.info("✅ Бот запущен и работает!")
+        print("🤖 Телеграм бот запущен!")
+        print(f"👤 Администратор: {ADMIN_ID}")
+        print(f"🕐 Текущее время в Ташкенте: {format_tashkent_time()}")
+        print("📋 Бот готов принимать команды...")
+        print("⏰ Напоминания каждый день в 7:00 (Ташкент)")
+        print("⚠️  Убедитесь, что это единственный экземпляр бота!")
+
+        # Запуск с защитой от конфликтов
+        application.run_polling(
+            allowed_updates=Update.ALL_TYPES,
+            drop_pending_updates=True,  # Игнорировать старые обновления
+            close_loop=False
+        )
+    except Exception as e:
+        if "Conflict" in str(e) or "terminated by other" in str(e):
+            logger.error("🚨 КОНФЛИКТ: Другой экземпляр бота уже запущен!")
+            print("\n❌ ОШИБКА: Бот уже запущен в другом месте!")
+            print("💡 РЕШЕНИЕ:")
+            print("1. Остановите все экземпляры: pkill -f bot.py")
+            print("2. Подождите 10 секунд")
+            print("3. Запустите бота заново")
+        else:
+            logger.error(f"❌ Критическая ошибка: {e}")
+            print(f"❌ Ошибка: {e}")
     except KeyboardInterrupt:
         logger.info("🛑 Бот остановлен пользователем")
         print("\n🛑 Бот остановлен")
-    except Exception as e:
-        logger.error(f"❌ Критическая ошибка: {e}")
-        print(f"❌ Ошибка: {e}")
+    finally:
+        logger.info("🔄 Завершение работы бота")
 
 if __name__ == '__main__':
     main()
