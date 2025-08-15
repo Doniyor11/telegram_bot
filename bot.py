@@ -13,7 +13,7 @@ import pytz
 
 # Настройки бота
 BOT_TOKEN = "8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY"
-ADMIN_ID = 1995964543
+ADMIN_ID = 8399139095
 
 # Логирование
 logging.basicConfig(
