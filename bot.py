@@ -13,7 +13,7 @@ import pytz
 
 # Настройки бота
 BOT_TOKEN = "8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY"
-ADMIN_ID = 8399139095
+ADMIN_ID = 633078634
 
 # Часовой пояс Ташкента
 TASHKENT_TZ = pytz.timezone('Asia/Tashkent')
@@ -43,7 +43,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Состояния
-DESTINATION, ADDRESS, WAITING_PHOTO = range(3)
+DESTINATION, ADDRESS, WAITING_PHOTO, SERVICE_TYPE, PAYMENT_STATUS, AMOUNT, DESCRIPTION = range(7)
 
 class DeliveryBot:
     def __init__(self):
@@ -190,9 +190,47 @@ class DeliveryBot:
         if success:
             logger.info(f"Задание #{task_id} принято пользователем {user_id}")
 
+    def complete_task(self, task_id, photo_file_id):
+        """Завершение задания с фото-отчетом (старый метод для совместимости)"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+                       UPDATE tasks
+                       SET status = 'completed', completed_at = CURRENT_TIMESTAMP, photo_file_id = ?
+                       WHERE task_id = ? AND status = 'accepted'
+                       ''', (photo_file_id, task_id))
+
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+
+        if success:
+            logger.info(f"Задание #{task_id} завершено")
+
         return success
 
-    def complete_task(self, task_id, photo_file_id):
+    def complete_task_with_details(self, task_id, photo_file_id, service_type, payment_received, amount, description):
+        """Завершение задания с полными деталями"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+                       UPDATE tasks
+                       SET status = 'completed', completed_at = CURRENT_TIMESTAMP,
+                           photo_file_id = ?, service_type = ?, payment_received = ?,
+                           amount = ?, description = ?
+                       WHERE task_id = ? AND status = 'accepted'
+                       ''', (photo_file_id, service_type, payment_received, amount, description, task_id))
+
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+
+        if success:
+            logger.info(f"Задание #{task_id} завершено с деталями")
+
+        return success
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -942,23 +980,70 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 async def get_destination(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data['destination'] = update.message.text
-    await update.message.reply_text("🏠 Теперь введите адрес:")
-    return ADDRESS
+    if update.message.location:
+        # Получена геолокация
+        location = update.message.location
+        context.user_data['latitude'] = location.latitude
+        context.user_data['longitude'] = location.longitude
+        context.user_data['destination'] = f"Координаты: {location.latitude:.6f}, {location.longitude:.6f}"
+
+        await update.message.reply_text(
+            f"📍 Геолокация получена!\n"
+            f"🗺️ Координаты: {location.latitude:.6f}, {location.longitude:.6f}\n\n"
+            f"🏠 Теперь введите описание адреса или дополнительную информацию:"
+        )
+        return ADDRESS
+
+    elif update.message.text:
+        # Получен текст с названием места
+        context.user_data['destination'] = update.message.text
+        context.user_data['latitude'] = None
+        context.user_data['longitude'] = None
+
+        await update.message.reply_text(
+            f"📍 Пункт назначения: {update.message.text}\n\n"
+            f"🏠 Теперь введите точный адрес:"
+        )
+        return ADDRESS
+
+    else:
+        await update.message.reply_text(
+            "❌ Пожалуйста, отправьте:\n"
+            "📍 Геолокацию (кнопка 📎 → Геопозиция)\n"
+            "или\n"
+            "📝 Название места текстом"
+        )
+        return DESTINATION
 
 async def get_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
     address = update.message.text
     destination = context.user_data['destination']
+    latitude = context.user_data.get('latitude')
+    longitude = context.user_data.get('longitude')
 
-    task_id = bot_instance.create_task(destination, address, update.effective_user.id)
+    # Создаем задание с геолокацией если есть
+    task_id = bot_instance.create_task(destination, address, update.effective_user.id, latitude, longitude)
 
-    task_message = (
-        f"📦 Новое задание #{task_id}\n\n"
-        f"📍 Пункт назначения: {destination}\n"
-        f"🏠 Адрес: {address}\n"
-        f"🕐 Время создания: {format_tashkent_time()}\n\n"
-        f"Нажмите 'Принимаю', чтобы взять задание:"
-    )
+    # Формируем сообщение для сотрудников
+    if latitude and longitude:
+        # Если есть координаты - добавляем карту
+        task_message = (
+            f"📦 Новое задание #{task_id}\n\n"
+            f"📍 Пункт назначения: {destination}\n"
+            f"🏠 Адрес: {address}\n"
+            f"🗺️ Координаты: {latitude:.6f}, {longitude:.6f}\n"
+            f"🕐 Время создания: {format_tashkent_time()}\n\n"
+            f"Нажмите 'Принимаю', чтобы взять задание:"
+        )
+    else:
+        # Без координат - обычное сообщение
+        task_message = (
+            f"📦 Новое задание #{task_id}\n\n"
+            f"📍 Пункт назначения: {destination}\n"
+            f"🏠 Адрес: {address}\n"
+            f"🕐 Время создания: {format_tashkent_time()}\n\n"
+            f"Нажмите 'Принимаю', чтобы взять задание:"
+        )
 
     keyboard = [[InlineKeyboardButton("✅ Принимаю", callback_data=f"accept_{task_id}")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -970,6 +1055,7 @@ async def get_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"=== СОЗДАНО ЗАДАНИЕ #{task_id} ===")
     logger.info(f"АДМИНИСТРАТОР: {ADMIN_ID} (НЕ получит задание)")
     logger.info(f"СОТРУДНИКИ: {employee_ids}")
+    logger.info(f"КООРДИНАТЫ: {latitude}, {longitude}")
 
     # Отправляем КАЖДОМУ сотруднику и сохраняем ID сообщений
     for employee_id in employee_ids:
@@ -978,11 +1064,21 @@ async def get_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
             continue
 
         try:
+            # Сначала отправляем текстовое сообщение
             sent_message = await context.bot.send_message(
                 chat_id=employee_id,
                 text=task_message,
                 reply_markup=reply_markup
             )
+
+            # Если есть координаты - отправляем геолокацию отдельно
+            if latitude and longitude:
+                await context.bot.send_location(
+                    chat_id=employee_id,
+                    latitude=latitude,
+                    longitude=longitude
+                )
+
             # Сохраняем ID сообщения для последующего удаления
             bot_instance.save_task_message(task_id, employee_id, sent_message.message_id)
             sent_count += 1
@@ -996,14 +1092,27 @@ async def get_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"❌ Ошибок отправки: {failed_count}")
     logger.info(f"👑 Администратору НЕ отправлено: {ADMIN_ID}")
 
+    # Подтверждение администратору
+    location_text = ""
+    if latitude and longitude:
+        location_text = f"\n🗺️ Координаты: {latitude:.6f}, {longitude:.6f}"
+
     await update.message.reply_text(
         f"✅ Задание #{task_id} создано!\n\n"
         f"📍 Пункт назначения: {destination}\n"
-        f"🏠 Адрес: {address}\n\n"
+        f"🏠 Адрес: {address}{location_text}\n\n"
         f"📤 Отправлено {sent_count} сотрудникам\n"
         f"❌ Ошибок: {failed_count}\n"
         f"👑 Вам (админу) задание НЕ отправлено"
     )
+
+    # Если есть координаты - отправляем карту и администратору для контроля
+    if latitude and longitude:
+        await context.bot.send_location(
+            chat_id=update.effective_user.id,
+            latitude=latitude,
+            longitude=longitude
+        )
 
     await show_admin_menu(update, context)
 
@@ -1015,51 +1124,21 @@ async def receive_photo_report(update: Update, context: ContextTypes.DEFAULT_TYP
         task_id = context.user_data.get('completing_task_id')
 
         if task_id:
-            if bot_instance.complete_task(task_id, photo.file_id):
-                user_info = bot_instance.get_user_info(update.effective_user.id)
-                username = user_info[0] if user_info[0] else "Не указан"
-                full_name = f"{user_info[1]} {user_info[2]}".strip()
+            # Сохраняем фото и переходим к заполнению деталей
+            context.user_data['photo_file_id'] = photo.file_id
 
-                task_info = bot_instance.get_task_info(task_id)
-                destination = task_info[0] if task_info else "Неизвестно"
-                address = task_info[1] if task_info else "Неизвестно"
-
-                notification_text = (
-                    f"🎉 Задание #{task_id} завершено!\n\n"
-                    f"👤 Сотрудник: {full_name}\n"
-                    f"📱 Username: @{username}\n"
-                    f"📍 Пункт назначения: {destination}\n"
-                    f"🏠 Адрес: {address}\n"
-                    f"🕐 Время завершения: {format_tashkent_time()}\n\n"
-                    f"📸 Фото-отчет:"
-                )
-
-                try:
-                    await context.bot.send_photo(
-                        chat_id=ADMIN_ID,
-                        photo=photo.file_id,
-                        caption=notification_text
-                    )
-                except Exception as e:
-                    logger.error(f"Ошибка отправки уведомления админу: {e}")
-
-                await update.message.reply_text(
-                    f"✅ Задание #{task_id} успешно завершено!\n"
-                    f"📸 Фото-отчет отправлен администратору.\n\n"
-                    f"Спасибо за работу! 👏\n\n"
-                    f"Используйте /start для возврата в меню."
-                )
-
-                return ConversationHandler.END
-            else:
-                await update.message.reply_text(
-                    "❌ Ошибка при завершении задания. Попробуйте еще раз."
-                )
-                return ConversationHandler.END
-        else:
             await update.message.reply_text(
-                "❌ Ошибка: задание не найдено."
+                "📸 Фото-отчет получен!\n\n"
+                "Теперь заполните детали о выполненной работе:\n\n"
+                "💰 Выберите тип услуги:",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🟢 Платная услуга", callback_data="service_paid")],
+                    [InlineKeyboardButton("🔵 Гарантийная услуга", callback_data="service_warranty")]
+                ])
             )
+            return SERVICE_TYPE
+        else:
+            await update.message.reply_text("❌ Ошибка: задание не найдено.")
             return ConversationHandler.END
     else:
         await update.message.reply_text(
@@ -1067,6 +1146,142 @@ async def receive_photo_report(update: Update, context: ContextTypes.DEFAULT_TYP
             "Или используйте /cancel для отмены."
         )
         return WAITING_PHOTO
+
+async def handle_service_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "service_paid":
+        context.user_data['service_type'] = "Платная услуга"
+        service_emoji = "🟢"
+    else:
+        context.user_data['service_type'] = "Гарантийная услуга"
+        service_emoji = "🔵"
+
+    await query.edit_message_text(
+        f"💰 Тип услуги: {service_emoji} {context.user_data['service_type']}\n\n"
+        "💵 Была ли получена оплата?",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("✅ Да, оплачено", callback_data="payment_yes")],
+            [InlineKeyboardButton("❌ Нет, не оплачено", callback_data="payment_no")]
+        ])
+    )
+    return PAYMENT_STATUS
+
+async def handle_payment_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "payment_yes":
+        context.user_data['payment_received'] = True
+        payment_text = "✅ Да"
+
+        await query.edit_message_text(
+            f"💰 Тип услуги: {context.user_data['service_type']}\n"
+            f"💵 Оплата получена: {payment_text}\n\n"
+            "💲 Введите сумму (в сумах):"
+        )
+        return AMOUNT
+    else:
+        context.user_data['payment_received'] = False
+        context.user_data['amount'] = 0
+        payment_text = "❌ Нет"
+
+        await query.edit_message_text(
+            f"💰 Тип услуги: {context.user_data['service_type']}\n"
+            f"💵 Оплата получена: {payment_text}\n\n"
+            "🧾 Введите краткое описание выполненной работы:\n"
+            "(например: мойка двигателя, замена масла, ремонт тормозов)"
+        )
+        return DESCRIPTION
+
+async def handle_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        amount = float(update.message.text.replace(' ', '').replace(',', '.'))
+        context.user_data['amount'] = amount
+
+        await update.message.reply_text(
+            f"💰 Тип услуги: {context.user_data['service_type']}\n"
+            f"💵 Оплата получена: ✅ Да\n"
+            f"💲 Сумма: {amount:,.0f} сум\n\n"
+            "🧾 Введите краткое описание выполненной работы:\n"
+            "(например: мойка двигателя, замена масла, ремонт тормозов)"
+        )
+        return DESCRIPTION
+    except ValueError:
+        await update.message.reply_text(
+            "❌ Неверный формат суммы!\n"
+            "Введите сумму числом (например: 50000 или 75000.50)"
+        )
+        return AMOUNT
+
+async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    description = update.message.text.strip()
+    context.user_data['description'] = description
+
+    # Получаем все данные
+    task_id = context.user_data.get('completing_task_id')
+    photo_file_id = context.user_data.get('photo_file_id')
+    service_type = context.user_data.get('service_type')
+    payment_received = context.user_data.get('payment_received')
+    amount = context.user_data.get('amount', 0)
+
+    # Завершаем задание с полными деталями
+    if bot_instance.complete_task_with_details(task_id, photo_file_id, service_type, payment_received, amount, description):
+        user_info = bot_instance.get_user_info(update.effective_user.id)
+        username = user_info[0] if user_info[0] else "Не указан"
+        full_name = f"{user_info[1]} {user_info[2]}".strip()
+
+        task_info = bot_instance.get_task_info(task_id)
+        destination = task_info[0] if task_info else "Неизвестно"
+        address = task_info[1] if task_info else "Неизвестно"
+
+        # Формируем детальный отчет для администратора
+        payment_status = "✅ Да" if payment_received else "❌ Нет"
+        amount_text = f"{amount:,.0f} сум" if payment_received and amount > 0 else "0 сум"
+
+        notification_text = (
+            f"🎉 Задание #{task_id} завершено!\n\n"
+            f"👤 Сотрудник: {full_name}\n"
+            f"📱 Username: @{username}\n"
+            f"📍 Пункт назначения: {destination}\n"
+            f"🏠 Адрес: {address}\n"
+            f"🕐 Время завершения: {format_tashkent_time()}\n\n"
+            f"💰 Тип услуги: {service_type}\n"
+            f"💵 Оплата получена: {payment_status}\n"
+            f"💲 Сумма: {amount_text}\n"
+            f"🧾 Описание работы: {description}\n\n"
+            f"📸 Фото-отчет:"
+        )
+
+        try:
+            await context.bot.send_photo(
+                chat_id=ADMIN_ID,
+                photo=photo_file_id,
+                caption=notification_text
+            )
+        except Exception as e:
+            logger.error(f"Ошибка отправки уведомления админу: {e}")
+
+        # Подтверждение сотруднику
+        summary_text = (
+            f"✅ Задание #{task_id} успешно завершено!\n\n"
+            f"📋 Отчет отправлен администратору:\n"
+            f"💰 {service_type}\n"
+            f"💵 Оплата: {payment_status}\n"
+            f"💲 Сумма: {amount_text}\n"
+            f"🧾 Работа: {description}\n\n"
+            f"Спасибо за работу! 👏\n\n"
+            f"Используйте /start для возврата в меню."
+        )
+
+        await update.message.reply_text(summary_text)
+        return ConversationHandler.END
+    else:
+        await update.message.reply_text(
+            "❌ Ошибка при завершении задания. Попробуйте еще раз."
+        )
+        return ConversationHandler.END
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❌ Операция отменена.")
@@ -1106,7 +1321,10 @@ def main():
     task_conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(button_handler, pattern="^create_task$")],
         states={
-            DESTINATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_destination)],
+            DESTINATION: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, get_destination),
+                MessageHandler(filters.LOCATION, get_destination)
+            ],
             ADDRESS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_address)]
         },
         fallbacks=[CommandHandler("cancel", cancel)]
@@ -1121,6 +1339,18 @@ def main():
             WAITING_PHOTO: [
                 MessageHandler(filters.PHOTO, receive_photo_report),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_photo_report)
+            ],
+            SERVICE_TYPE: [
+                CallbackQueryHandler(handle_service_type, pattern="^service_")
+            ],
+            PAYMENT_STATUS: [
+                CallbackQueryHandler(handle_payment_status, pattern="^payment_")
+            ],
+            AMOUNT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_amount)
+            ],
+            DESCRIPTION: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, handle_description)
             ]
         },
         fallbacks=[CommandHandler("cancel", cancel)]
