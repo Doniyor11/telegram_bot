@@ -11,7 +11,6 @@ import sqlite3
 from datetime import datetime, time
 import pytz
 
-
 # Настройки бота
 BOT_TOKEN = "8249402614:AAFQgtDqZtBByhe3MTU0JsuPRjK94l_HWvY"
 ADMIN_ID = 633078634
@@ -28,7 +27,6 @@ def format_tashkent_time(dt=None):
     if dt is None:
         dt = get_tashkent_time()
     elif dt.tzinfo is None:
-        # Если время без часового пояса, считаем что это UTC и конвертируем
         dt = pytz.UTC.localize(dt).astimezone(TASHKENT_TZ)
     return dt.strftime('%d.%m.%Y %H:%M')
 
@@ -55,6 +53,7 @@ class DeliveryBot:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
+        # Таблица пользователей
         cursor.execute('''
                        CREATE TABLE IF NOT EXISTS users (
                                                             user_id INTEGER PRIMARY KEY,
@@ -66,11 +65,14 @@ class DeliveryBot:
                        )
                        ''')
 
+        # Обновленная таблица заданий с новыми полями
         cursor.execute('''
                        CREATE TABLE IF NOT EXISTS tasks (
                                                             task_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                             destination TEXT NOT NULL,
                                                             address TEXT NOT NULL,
+                                                            latitude REAL,
+                                                            longitude REAL,
                                                             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                                                             created_by INTEGER,
                                                             status TEXT DEFAULT 'pending',
@@ -78,11 +80,16 @@ class DeliveryBot:
                                                             accepted_at DATETIME,
                                                             completed_at DATETIME,
                                                             photo_file_id TEXT,
+                                                            service_type TEXT,
+                                                            payment_received BOOLEAN DEFAULT FALSE,
+                                                            amount REAL DEFAULT 0,
+                                                            description TEXT,
                                                             FOREIGN KEY (created_by) REFERENCES users (user_id),
                            FOREIGN KEY (accepted_by) REFERENCES users (user_id)
                            )
                        ''')
 
+        # Таблица посещаемости
         cursor.execute('''
                        CREATE TABLE IF NOT EXISTS work_attendance (
                                                                       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,6 +97,17 @@ class DeliveryBot:
                                                                       check_in_time DATETIME DEFAULT CURRENT_TIMESTAMP,
                                                                       date DATE DEFAULT (date('now')),
                            FOREIGN KEY (user_id) REFERENCES users (user_id)
+                           )
+                       ''')
+
+        # Таблица сообщений заданий
+        cursor.execute('''
+                       CREATE TABLE IF NOT EXISTS task_messages (
+                                                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                                    task_id INTEGER NOT NULL,
+                                                                    user_id INTEGER NOT NULL,
+                                                                    message_id INTEGER NOT NULL,
+                                                                    FOREIGN KEY (task_id) REFERENCES tasks (task_id)
                            )
                        ''')
 
@@ -151,21 +169,17 @@ class DeliveryBot:
         for user_id, first_name, username in users:
             if user_id != ADMIN_ID:
                 employee_ids.append(user_id)
-                logger.info(f"Сотрудник: ID={user_id}, Имя={first_name}")
-            else:
-                logger.warning(f"ИСКЛЮЧЕН АДМИН: ID={user_id}")
 
-        logger.info(f"Список сотрудников: {employee_ids}")
         return employee_ids
 
-    def create_task(self, destination, address, created_by):
+    def create_task(self, destination, address, created_by, latitude=None, longitude=None):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
         cursor.execute('''
-                       INSERT INTO tasks (destination, address, created_by)
-                       VALUES (?, ?, ?)
-                       ''', (destination, address, created_by))
+                       INSERT INTO tasks (destination, address, latitude, longitude, created_by)
+                       VALUES (?, ?, ?, ?, ?)
+                       ''', (destination, address, latitude, longitude, created_by))
 
         task_id = cursor.lastrowid
         conn.commit()
@@ -191,24 +205,6 @@ class DeliveryBot:
         if success:
             logger.info(f"Задание #{task_id} принято пользователем {user_id}")
 
-    def complete_task(self, task_id, photo_file_id):
-        """Завершение задания с фото-отчетом (старый метод для совместимости)"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute('''
-                       UPDATE tasks
-                       SET status = 'completed', completed_at = CURRENT_TIMESTAMP, photo_file_id = ?
-                       WHERE task_id = ? AND status = 'accepted'
-                       ''', (photo_file_id, task_id))
-
-        success = cursor.rowcount > 0
-        conn.commit()
-        conn.close()
-
-        if success:
-            logger.info(f"Задание #{task_id} завершено")
-
         return success
 
     def complete_task_with_details(self, task_id, photo_file_id, service_type, payment_received, amount, description):
@@ -232,30 +228,13 @@ class DeliveryBot:
             logger.info(f"Задание #{task_id} завершено с деталями")
 
         return success
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute('''
-                       UPDATE tasks
-                       SET status = 'completed', completed_at = CURRENT_TIMESTAMP, photo_file_id = ?
-                       WHERE task_id = ? AND status = 'accepted'
-                       ''', (photo_file_id, task_id))
-
-        success = cursor.rowcount > 0
-        conn.commit()
-        conn.close()
-
-        if success:
-            logger.info(f"Задание #{task_id} завершено")
-
-        return success
 
     def get_task_info(self, task_id):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
         cursor.execute('''
-                       SELECT destination, address, accepted_by, status
+                       SELECT destination, address, accepted_by, status, latitude, longitude
                        FROM tasks WHERE task_id = ?
                        ''', (task_id,))
 
@@ -272,27 +251,22 @@ class DeliveryBot:
         stats = {}
 
         try:
-            # Общее количество заданий
             cursor.execute('SELECT COUNT(*) FROM tasks')
             stats['total_tasks'] = cursor.fetchone()[0]
 
-            # Количество заданий по статусам
             cursor.execute('SELECT status, COUNT(*) FROM tasks GROUP BY status')
             status_counts = cursor.fetchall()
             for status, count in status_counts:
                 stats[f'{status}_tasks'] = count
 
-            # Количество пользователей (только сотрудники)
             cursor.execute('SELECT COUNT(*) FROM users WHERE is_admin = FALSE AND user_id != ?', (ADMIN_ID,))
             stats['total_users'] = cursor.fetchone()[0]
 
-            # Сегодняшняя посещаемость
             cursor.execute('SELECT COUNT(*) FROM work_attendance WHERE date = date("now")')
             stats['today_attendance'] = cursor.fetchone()[0]
 
         except Exception as e:
             logger.error(f"Ошибка в get_stats: {e}")
-            # Возвращаем значения по умолчанию
             stats = {
                 'total_tasks': 0,
                 'pending_tasks': 0,
@@ -397,22 +371,11 @@ class DeliveryBot:
         cursor = conn.cursor()
 
         cursor.execute('''
-                       CREATE TABLE IF NOT EXISTS task_messages (
-                                                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                                    task_id INTEGER NOT NULL,
-                                                                    user_id INTEGER NOT NULL,
-                                                                    message_id INTEGER NOT NULL,
-                                                                    FOREIGN KEY (task_id) REFERENCES tasks (task_id)
-                           )
-                       ''')
-
-        cursor.execute('''
                        SELECT user_id, message_id FROM task_messages
                        WHERE task_id = ?
                        ''', (task_id,))
 
         result = cursor.fetchall()
-        conn.commit()
         conn.close()
 
         return result
@@ -441,50 +404,6 @@ class DeliveryBot:
         conn.commit()
         conn.close()
         logger.info(f"Удалены записи сообщений для задания #{task_id}")
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        stats = {}
-
-        cursor.execute('SELECT COUNT(*) FROM tasks')
-        stats['total_tasks'] = cursor.fetchone()[0]
-
-        cursor.execute('SELECT status, COUNT(*) FROM tasks GROUP BY status')
-        status_counts = cursor.fetchall()
-        for status, count in status_counts:
-            stats[f'{status}_tasks'] = count
-
-        cursor.execute('SELECT COUNT(*) FROM users WHERE is_admin = FALSE')
-        stats['total_users'] = cursor.fetchone()[0]
-
-        conn.close()
-    def get_stats(self):
-        """Получение статистики"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        stats = {}
-
-        # Общее количество заданий
-        cursor.execute('SELECT COUNT(*) FROM tasks')
-        stats['total_tasks'] = cursor.fetchone()[0]
-
-        # Количество заданий по статусам
-        cursor.execute('SELECT status, COUNT(*) FROM tasks GROUP BY status')
-        status_counts = cursor.fetchall()
-        for status, count in status_counts:
-            stats[f'{status}_tasks'] = count
-
-        # Количество пользователей (только сотрудники)
-        cursor.execute('SELECT COUNT(*) FROM users WHERE is_admin = FALSE AND user_id != ?', (ADMIN_ID,))
-        stats['total_users'] = cursor.fetchone()[0]
-
-        # Сегодняшняя посещаемость
-        cursor.execute('SELECT COUNT(*) FROM work_attendance WHERE date = date("now")')
-        stats['today_attendance'] = cursor.fetchone()[0]
-
-        conn.close()
-        return stats
 
 bot_instance = DeliveryBot()
 
@@ -661,7 +580,6 @@ async def attendance_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             full_name = f"{first_name} {last_name}".strip()
             username_text = f"@{username}" if username else "Не указан"
 
-            # Конвертируем время из базы в ташкентское время
             try:
                 if check_in_time:
                     dt = datetime.fromisoformat(check_in_time)
@@ -806,30 +724,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "stats":
         if bot_instance.is_admin(user_id):
             try:
-                # Проверяем, есть ли метод get_stats
-                if hasattr(bot_instance, 'get_stats'):
-                    stats = bot_instance.get_stats()
-                else:
-                    # Запасной вариант - получаем статистику напрямую
-                    stats = {}
-                    conn = sqlite3.connect(bot_instance.db_path)
-                    cursor = conn.cursor()
-
-                    cursor.execute('SELECT COUNT(*) FROM tasks')
-                    stats['total_tasks'] = cursor.fetchone()[0]
-
-                    cursor.execute('SELECT status, COUNT(*) FROM tasks GROUP BY status')
-                    status_counts = cursor.fetchall()
-                    for status, count in status_counts:
-                        stats[f'{status}_tasks'] = count
-
-                    cursor.execute('SELECT COUNT(*) FROM users WHERE is_admin = FALSE')
-                    stats['total_users'] = cursor.fetchone()[0]
-
-                    cursor.execute('SELECT COUNT(*) FROM work_attendance WHERE date = date("now")')
-                    stats['today_attendance'] = cursor.fetchone()[0]
-
-                    conn.close()
+                stats = bot_instance.get_stats()
 
                 total_users = stats.get('total_users', 0)
                 total_tasks = stats.get('total_tasks', 0)
@@ -986,12 +881,12 @@ async def get_destination(update: Update, context: ContextTypes.DEFAULT_TYPE):
         location = update.message.location
         context.user_data['latitude'] = location.latitude
         context.user_data['longitude'] = location.longitude
-        context.user_data['destination'] = f"Координаты: {location.latitude:.6f}, {location.longitude:.6f}"
+        context.user_data['destination'] = f"Геолокация: {location.latitude:.6f}, {location.longitude:.6f}"
 
         await update.message.reply_text(
             f"📍 Геолокация получена!\n"
             f"🗺️ Координаты: {location.latitude:.6f}, {location.longitude:.6f}\n\n"
-            f"🏠 Теперь введите описание адреса или дополнительную информацию:"
+            f"🏠 Теперь введите описание адреса или название места:"
         )
         return ADDRESS
 
@@ -1153,14 +1048,14 @@ async def handle_service_type(update: Update, context: ContextTypes.DEFAULT_TYPE
     await query.answer()
 
     if query.data == "service_paid":
-        context.user_data['service_type'] = "Платная услуга"
-        service_emoji = "🟢"
+        context.user_data['service_type'] = "🟢 Платная услуга"
+        service_text = "🟢 Платная услуга"
     else:
-        context.user_data['service_type'] = "Гарантийная услуга"
-        service_emoji = "🔵"
+        context.user_data['service_type'] = "🔵 Гарантийная услуга"
+        service_text = "🔵 Гарантийная услуга"
 
     await query.edit_message_text(
-        f"💰 Тип услуги: {service_emoji} {context.user_data['service_type']}\n\n"
+        f"💰 Тип услуги: {service_text}\n\n"
         "💵 Была ли получена оплата?",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("✅ Да, оплачено", callback_data="payment_yes")],
@@ -1173,12 +1068,14 @@ async def handle_payment_status(update: Update, context: ContextTypes.DEFAULT_TY
     query = update.callback_query
     await query.answer()
 
+    service_type = context.user_data.get('service_type', 'Не указано')
+
     if query.data == "payment_yes":
         context.user_data['payment_received'] = True
         payment_text = "✅ Да"
 
         await query.edit_message_text(
-            f"💰 Тип услуги: {context.user_data['service_type']}\n"
+            f"💰 Тип услуги: {service_type}\n"
             f"💵 Оплата получена: {payment_text}\n\n"
             "💲 Введите сумму (в сумах):"
         )
@@ -1189,24 +1086,28 @@ async def handle_payment_status(update: Update, context: ContextTypes.DEFAULT_TY
         payment_text = "❌ Нет"
 
         await query.edit_message_text(
-            f"💰 Тип услуги: {context.user_data['service_type']}\n"
+            f"💰 Тип услуги: {service_type}\n"
             f"💵 Оплата получена: {payment_text}\n\n"
             "🧾 Введите краткое описание выполненной работы:\n"
-            "(например: мойка двигателя, замена масла, ремонт тормозов)"
+            "(масло заменено, тормоза отремонтированы, кабель подключен и т.д.)"
         )
         return DESCRIPTION
 
 async def handle_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        amount = float(update.message.text.replace(' ', '').replace(',', '.'))
+        # Убираем пробелы и заменяем запятые на точки
+        amount_text = update.message.text.replace(' ', '').replace(',', '.')
+        amount = float(amount_text)
         context.user_data['amount'] = amount
 
+        service_type = context.user_data.get('service_type', 'Не указано')
+
         await update.message.reply_text(
-            f"💰 Тип услуги: {context.user_data['service_type']}\n"
+            f"💰 Тип услуги: {service_type}\n"
             f"💵 Оплата получена: ✅ Да\n"
             f"💲 Сумма: {amount:,.0f} сум\n\n"
             "🧾 Введите краткое описание выполненной работы:\n"
-            "(например: мойка двигателя, замена масла, ремонт тормозов)"
+            "(масло заменено, тормоза отремонтированы, кабель подключен и т.д.)"
         )
         return DESCRIPTION
     except ValueError:
@@ -1223,8 +1124,8 @@ async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE)
     # Получаем все данные
     task_id = context.user_data.get('completing_task_id')
     photo_file_id = context.user_data.get('photo_file_id')
-    service_type = context.user_data.get('service_type')
-    payment_received = context.user_data.get('payment_received')
+    service_type = context.user_data.get('service_type', 'Не указано')
+    payment_received = context.user_data.get('payment_received', False)
     amount = context.user_data.get('amount', 0)
 
     # Завершаем задание с полными деталями
@@ -1272,11 +1173,14 @@ async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE)
             f"💵 Оплата: {payment_status}\n"
             f"💲 Сумма: {amount_text}\n"
             f"🧾 Работа: {description}\n\n"
-            f"Спасибо за работу! 👏\n\n"
-            f"Используйте /start для возврата в меню."
+            f"Спасибо за работу! 👏"
         )
 
         await update.message.reply_text(summary_text)
+
+        # Очищаем данные пользователя
+        context.user_data.clear()
+
         return ConversationHandler.END
     else:
         await update.message.reply_text(
